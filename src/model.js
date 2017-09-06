@@ -267,26 +267,32 @@ ngFileUpload.service('Upload', ['$parse', '$timeout', '$compile', '$q', 'UploadE
     var validateAfterResize = upload.attrGetter('ngfValidateAfterResize', attr, scope);
 
     var options = upload.attrGetter('ngfModelOptions', attr, scope);
-    upload.validate(allNewFiles, keep ? prevValidFiles.length : 0, ngModel, attr, scope)
-      .then(function (validationResult) {
-      if (noDelay) {
-        update(allNewFiles, [], files, dupFiles, isSingleModel);
-      } else {
-        if ((!options || !options.allowInvalid) && !validateAfterResize) {
-          valids = validationResult.validFiles;
-          invalids = validationResult.invalidFiles;
-        } else {
-          valids = allNewFiles;
-        }
-        if (upload.attrGetter('ngfFixOrientation', attr, scope) && upload.isExifSupported()) {
-          applyExifRotations(valids, attr, scope).then(function () {
+
+    function validate() {
+      upload.validate(allNewFiles, keep ? prevValidFiles.length : 0, ngModel, attr, scope)
+        .then(function (validationResult) {
+          if (noDelay) {
+            update(allNewFiles, [], files, dupFiles, isSingleModel);
+          } else {
+            if ((!options || !options.allowInvalid) && !validateAfterResize) {
+              valids = validationResult.validFiles;
+              invalids = validationResult.invalidFiles;
+            } else {
+              valids = allNewFiles;
+            }
             resizeAndUpdate();
-          });
-        } else {
-          resizeAndUpdate();
-        }
-      }
-    });
+          }
+        });
+    }
+
+    if (upload.attrGetter('ngfFixOrientation', attr, scope) && upload.isExifSupported()) {
+      applyExifRotations(allNewFiles, attr, scope)
+        .then(function () {
+          validate();
+        });
+    } else {
+      validate();
+    }
   };
 
   return upload;
